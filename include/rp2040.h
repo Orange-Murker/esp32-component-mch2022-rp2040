@@ -3,10 +3,11 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
-#include <freertos/queue.h>
 #include <freertos/semphr.h>
 #include <freertos/task.h>
 #include <stdint.h>
+
+#include "driver/i2c_types.h"
 
 enum {
     RP2040_REG_FW_VER = 0,
@@ -33,7 +34,7 @@ enum {
     RP2040_REG_CHARGING_STATE,
     RP2040_REG_ADC_VALUE_TEMP_LO,
     RP2040_REG_ADC_VALUE_TEMP_HI,
-    RP2040_REG_UID0, // Unique board identifier of the RP2040
+    RP2040_REG_UID0,  // Unique board identifier of the RP2040
     RP2040_REG_UID1,
     RP2040_REG_UID2,
     RP2040_REG_UID3,
@@ -175,7 +176,7 @@ enum {
 
 enum { RP2040_BL_REG_FW_VER, RP2040_BL_REG_BL_VER, RP2040_BL_REG_BL_STATE, RP2040_BL_REG_BL_CTRL };
 
-enum {
+typedef enum {
     RP2040_INPUT_BUTTON_HOME = 0,
     RP2040_INPUT_BUTTON_MENU,
     RP2040_INPUT_BUTTON_START,
@@ -189,28 +190,25 @@ enum {
     RP2040_INPUT_JOYSTICK_DOWN,
     RP2040_INPUT_JOYSTICK_UP,
     RP2040_INPUT_JOYSTICK_RIGHT
-};
+} rp2040_input_t;
 
 typedef void (*rp2040_intr_t)();
 
-typedef struct {
-    int              i2c_bus;
-    int              i2c_address;
-    int              pin_interrupt;
-    xQueueHandle     queue;
-    xSemaphoreHandle i2c_semaphore;
-    rp2040_intr_t    _intr_handler;
-    TaskHandle_t     _intr_task_handle;
-    xSemaphoreHandle _intr_trigger;
-    uint8_t          _gpio_direction;
-    uint8_t          _gpio_value;
-    uint8_t          _fw_version;
-} RP2040;
+typedef void (*rp2040_callback_t)(rp2040_input_t input, bool state);
 
-typedef struct _rp2040_input_message {
-    uint8_t input;
-    bool    state;
-} rp2040_input_message_t;
+typedef struct {
+    i2c_master_bus_handle_t i2c_bus_handle;
+    int                     i2c_address;
+    int                     pin_interrupt;
+    rp2040_callback_t       callback;
+    SemaphoreHandle_t       i2c_semaphore;
+    rp2040_intr_t           _intr_handler;
+    TaskHandle_t            _intr_task_handle;
+    SemaphoreHandle_t       _intr_trigger;
+    uint8_t                 _gpio_direction;
+    uint8_t                 _gpio_value;
+    uint8_t                 _fw_version;
+} RP2040;
 
 esp_err_t rp2040_init(RP2040* device);
 
