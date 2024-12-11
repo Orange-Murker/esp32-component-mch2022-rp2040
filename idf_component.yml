@@ -1,0 +1,7 @@
+dependencies:
+  idf: '>=5.0'
+description: MCH2022 RP2040 co-processor
+license: MIT
+repository: https://github.com/Orange-Murker/esp32-component-mch2022-rp2040.git
+url: https://github.com/Orange-Murker/esp32-component-mch2022-rp2040
+version: 0.0.2
